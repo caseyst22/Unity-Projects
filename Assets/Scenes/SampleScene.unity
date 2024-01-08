@@ -696,11 +696,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe9a13eafe9b8406b8d8fd51dea1e856, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resolution: 1000
+  resolution: 500
   function: 0
-  transitionMode: 2
-  functionDuration: 1
-  transitionDuration: 0
+  transitionMode: 0
+  functionDuration: 5
+  transitionDuration: 1
   computeShader: {fileID: 7200000, guid: 8c0e07daa49da450d91d0966e3ebb509, type: 3}
   material: {fileID: 2100000, guid: 38dbd6711f0eb4e6ea9c882612eb1b6a, type: 2}
   mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
