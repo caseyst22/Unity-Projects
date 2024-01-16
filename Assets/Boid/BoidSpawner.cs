@@ -47,10 +47,11 @@ public class BoidSpawner : MonoBehaviour
             Vector3 position = boids[i].transform.localPosition;
             position += boidDirection[i] * speed * Time.deltaTime;
              
-            if (position.x > rightBound) position = new Vector3(leftBound, position.y);
+            /*if (position.x > rightBound) position = new Vector3(leftBound, position.y);
             else if (position.x < leftBound) position = new Vector3(rightBound, position.y);
             else if (position.y > topBound) position = new Vector3(position.x, bottomBound);
             else if (position.y < bottomBound) position = new Vector3(position.x, topBound);
+            */
             /*           
             if (position.x > rightBound || position.x < leftBound || position.y > topBound || position.y < bottomBound)
                 boidDirection[i] = Quaternion.AngleAxis(Random.Range(180f, 360f), Vector3.forward) * boidDirection[i];
@@ -89,28 +90,33 @@ public class BoidSpawner : MonoBehaviour
 
     private void DetectObstacles(int boidID) {
         Collider2D collider = boids[boidID].GetComponent<Collider2D>();
-        RaycastHit2D[] results = new RaycastHit2D[1];
+        RaycastHit2D[] results = new RaycastHit2D[10];
         if (collider.Raycast(boidDirection[boidID], results, detectionRadius) != 0) {
             Vector3 direction = boidDirection[boidID];
-            //List<Vector3> possibleDirections = new List<Vector3>();
+            //Trying to get them to avoid boundaries but they tend to slip through
+            for (int i = 0; i < 10; i++) {
+                if (results[i] && results[i].transform.gameObject.tag == "Border") {
+                    Vector3 normal = results[i].normal;
+                    //Want them to turn away from the wall in the direction they are facing from it
+                    if (Vector3.Angle(direction, normal) > 0) {
+                        boidDirection[boidID] = Quaternion.AngleAxis(45, Vector3.forward) * direction;
+                        return;
+                    }
+                    else {
+                        boidDirection[boidID] = Quaternion.AngleAxis(-45, Vector3.forward) * direction;
+                        return;
+                    }
+                }
+            }
             for (int i = 10; i <= viewAngle / 2; i += 10) {
                 if (collider.Raycast(Quaternion.AngleAxis(-i, Vector3.forward) * direction, results, detectionRadius) == 0) {
-                    //possibleDirections.Add(Quaternion.AngleAxis(-i, Vector3.forward) * direction);
                     boidDirection[boidID] = Quaternion.AngleAxis(-10, Vector3.forward) * direction;
                     return;
                 }
                 if (collider.Raycast(Quaternion.AngleAxis(i, Vector3.forward) * direction, results, detectionRadius) == 0) {
-                    //possibleDirections.Add(Quaternion.AngleAxis(i, Vector3.forward) * direction);
                     boidDirection[boidID] = Quaternion.AngleAxis(10, Vector3.forward) * direction;
                     return;
                 }
-            }
-            //boidDirection[boidID] = possibleDirections[Random.Range(0, possibleDirections.Count)]; 
-            if (Random.Range(0, 2) == 0) { 
-                boidDirection[boidID] = Quaternion.AngleAxis(-10, Vector3.forward) * direction;
-            }
-            else {
-                boidDirection[boidID] = Quaternion.AngleAxis(10, Vector3.forward) * direction;
             }
         }
     }
