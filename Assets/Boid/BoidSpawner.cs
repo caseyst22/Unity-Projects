@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+using System.Xml.Serialization;
+using Unity.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class BoidSpawner : MonoBehaviour
@@ -10,15 +13,18 @@ public class BoidSpawner : MonoBehaviour
     int population;
 
     [SerializeField]
-    float topBound, bottomBound, leftBound, rightBound;
+    float vBound, hBound;
 
     [SerializeField, Range(0,10)]    
     int speed; 
 
     [SerializeField]
-    float detectionRadius = 1f;
+    float detectionRadius = 1f, minRadius = .25f;
     [SerializeField, Range(0, 360)]
     int viewAngle;
+
+    [SerializeField]
+    int maxDetectableBoids = 5;
 
     GameObject[] boids; 
     Vector3[] boidDirection;
@@ -31,8 +37,8 @@ public class BoidSpawner : MonoBehaviour
             GameObject boid = boids[i] = Instantiate(boidPrefab);
             boid.transform.SetParent(transform, false);
             boid.transform.localPosition = new Vector3(
-                Random.Range(leftBound, rightBound),
-                Random.Range(topBound, bottomBound)
+                Random.Range(-hBound, hBound),
+                Random.Range(-vBound, vBound)
             );
             boidDirection[i] = Random.insideUnitCircle.normalized;
         }
@@ -41,24 +47,27 @@ public class BoidSpawner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        //Update Direction
         for (int i = 0; i < population; i++) {
-            DetectObstacles(i);
-            DetectOtherBoids(i);
+            //AvoidObstacles(i);
+            List<int> nearbyBoids = GetNearbyBoids(i);
+            AvoidOtherBoids(i);
+            MoveWithNearbyBoids(i, nearbyBoids);
+        } 
+        //Update positions
+        for (int i = 0; i < population; i++) {
             Vector3 position = boids[i].transform.localPosition;
             position += boidDirection[i] * speed * Time.deltaTime;
              
-            /*if (position.x > rightBound) position = new Vector3(leftBound, position.y);
-            else if (position.x < leftBound) position = new Vector3(rightBound, position.y);
-            else if (position.y > topBound) position = new Vector3(position.x, bottomBound);
-            else if (position.y < bottomBound) position = new Vector3(position.x, topBound);
-            */
-            /*           
-            if (position.x > rightBound || position.x < leftBound || position.y > topBound || position.y < bottomBound)
-                boidDirection[i] = Quaternion.AngleAxis(Random.Range(180f, 360f), Vector3.forward) * boidDirection[i];
-            */
+            
+            if (position.x > hBound) position = new Vector3(-hBound, position.y);
+            else if (position.x < -hBound) position = new Vector3(hBound, position.y);
+            else if (position.y > vBound) position = new Vector3(position.x, -vBound);
+            else if (position.y < -vBound) position = new Vector3(position.x, vBound);
+
             boids[i].transform.localRotation = RotateTowardsMovement(boids[i].transform.localPosition, position); 
             boids[i].transform.localPosition = position;
-        } 
+        }
     }
 
     private Quaternion RotateTowardsMovement(Vector3 currPos, Vector3 nextPos) {
@@ -68,53 +77,66 @@ public class BoidSpawner : MonoBehaviour
         return rotation;
     }
 
-    private void DetectOtherBoids(int boidID) {
+    private List<int> GetNearbyBoids(int boidID) {
         Transform boid = boids[boidID].transform;
-        List<int> nearbyBoids = new List<int>(population);
+        List<int> nearbyBoids = new List<int>(maxDetectableBoids);
         for (int i = 0; i < population; i++) {
-            if (Vector3.Distance(boid.position, boids[i].transform.position) <= detectionRadius) {
-                nearbyBoids.Add(i);
-            } 
+            float distance = Vector3.Distance(boid.position, boids[i].transform.position);
+            if (distance > detectionRadius) continue;
+            nearbyBoids.Add(i);
+            if (nearbyBoids.Count == maxDetectableBoids) break;
         }
+        return nearbyBoids;
+    }
+
+    private void MoveWithNearbyBoids(int boidID, List<int> nearbyBoids) {
         Vector3 direction = boidDirection[boidID];
-        //Vector3 position = Vector3.zero;
         for (int i = 0; i < nearbyBoids.Count; i++) {
-            direction += (boidDirection[nearbyBoids[i]] + boidDirection[boidID]).normalized;
-            //position += boids[nearbyBoids[i]].transform.position;
+            direction += boidDirection[nearbyBoids[i]];
         }
-        direction /= nearbyBoids.Count + 1;
-        //position /= nearbyBoids.Count + 1;
-        //boidDirection[boidID] = (direction + position).normalized;
+        direction = (direction / (nearbyBoids.Count + 1)).normalized;
         boidDirection[boidID] = direction;
     }
 
-    private void DetectObstacles(int boidID) {
+    private void JostleForPosition(int boidID, List<int> nearbyBoids) {
+
+    }
+
+    private void AvoidOtherBoids(int boidID) {
         Collider2D collider = boids[boidID].GetComponent<Collider2D>();
-        RaycastHit2D[] results = new RaycastHit2D[10];
-        if (collider.Raycast(boidDirection[boidID], results, detectionRadius) != 0) {
+        RaycastHit2D[] results = new RaycastHit2D[1];
+        if (collider.Raycast(boidDirection[boidID], results, detectionRadius, LayerMask.GetMask("Default")) != 0) {
             Vector3 direction = boidDirection[boidID];
-            //Trying to get them to avoid boundaries but they tend to slip through
-            for (int i = 0; i < 10; i++) {
-                if (results[i] && results[i].transform.gameObject.tag == "Border") {
-                    Vector3 normal = results[i].normal;
-                    //Want them to turn away from the wall in the direction they are facing from it
-                    if (Vector3.Angle(direction, normal) > 0) {
-                        boidDirection[boidID] = Quaternion.AngleAxis(45, Vector3.forward) * direction;
-                        return;
-                    }
-                    else {
-                        boidDirection[boidID] = Quaternion.AngleAxis(-45, Vector3.forward) * direction;
-                        return;
-                    }
-                }
-            }
             for (int i = 10; i <= viewAngle / 2; i += 10) {
-                if (collider.Raycast(Quaternion.AngleAxis(-i, Vector3.forward) * direction, results, detectionRadius) == 0) {
-                    boidDirection[boidID] = Quaternion.AngleAxis(-10, Vector3.forward) * direction;
+                int angle = (Random.Range(0, 2) == 0) ? i : -i;
+                if (collider.Raycast(Quaternion.AngleAxis(angle, Vector3.forward) * direction,
+                    results, detectionRadius, LayerMask.GetMask("Default")) == 0) {
+                    boidDirection[boidID] = Quaternion.AngleAxis(10 * (angle / Mathf.Abs(angle)), Vector3.forward) * direction;
                     return;
                 }
-                if (collider.Raycast(Quaternion.AngleAxis(i, Vector3.forward) * direction, results, detectionRadius) == 0) {
-                    boidDirection[boidID] = Quaternion.AngleAxis(10, Vector3.forward) * direction;
+                if (collider.Raycast(Quaternion.AngleAxis(-angle, Vector3.forward) * direction,
+                    results, detectionRadius, LayerMask.GetMask("Default")) == 0) {
+                    boidDirection[boidID] = Quaternion.AngleAxis(10 * (-angle / Mathf.Abs(angle)), Vector3.forward) * direction;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void AvoidObstacles(int boidID) {
+        Collider2D collider = boids[boidID].GetComponent<Collider2D>();
+        RaycastHit2D[] results = new RaycastHit2D[1];
+        if (collider.Raycast(boidDirection[boidID], results, detectionRadius, LayerMask.GetMask("Obstacles")) != 0) {
+            Vector3 direction = boidDirection[boidID];
+            for (int i = 10; i <= viewAngle / 2; i += 10) {
+                if (collider.Raycast(Quaternion.AngleAxis(-i, Vector3.forward) * direction,
+                    results, detectionRadius, LayerMask.GetMask("Obstacles")) == 0) {
+                    boidDirection[boidID] = Quaternion.AngleAxis(-i - 20, Vector3.forward) * direction;
+                    return;
+                }
+                if (collider.Raycast(Quaternion.AngleAxis(i, Vector3.forward) * direction,
+                    results, detectionRadius, LayerMask.GetMask("Obstacles")) == 0) {
+                    boidDirection[boidID] = Quaternion.AngleAxis(i + 20, Vector3.forward) * direction;
                     return;
                 }
             }
