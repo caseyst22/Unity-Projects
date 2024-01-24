@@ -1,4 +1,4 @@
 # Flappy-Bird
-My version of the mobile game Flappy Bird, made in Unity.
+My first project made in Unity, recreating the popular mobile game Flappy Bird
 
-Uses art from Game Makers Toolkit https://www.youtube.com/watch?v=XtQMytORBmM&t=2474s
+Following tutorial from Game Makers Toolkit https://www.youtube.com/watch?v=XtQMytORBmM&t=2474s
