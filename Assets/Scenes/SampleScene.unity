@@ -136,7 +136,7 @@ GameObject:
   - component: {fileID: 266833437}
   m_Layer: 3
   m_Name: RightBorder
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -264,7 +264,7 @@ GameObject:
   - component: {fileID: 418935756}
   m_Layer: 3
   m_Name: Borders
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -425,14 +425,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   boidPrefab: {fileID: 3514468259559758741, guid: ef58dc6640ac84d1a85d6beb5d95a0fd, type: 3}
-  population: 300
+  population: 100
   vBound: 10
   hBound: 20
-  speed: 8
-  detectionRadius: 1
-  minRadius: 0.1
+  speed: 6
+  boidDetection: 2
+  obstacleDetection: 3
+  collisionDetection: 1
   viewAngle: 270
-  maxDetectableBoids: 10
 --- !u!1 &919815777
 GameObject:
   m_ObjectHideFlags: 0
@@ -446,7 +446,7 @@ GameObject:
   - component: {fileID: 919815779}
   m_Layer: 3
   m_Name: BottomBorder
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -576,7 +576,7 @@ GameObject:
   - component: {fileID: 1844315710}
   m_Layer: 3
   m_Name: TopBorder
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -706,7 +706,7 @@ GameObject:
   - component: {fileID: 1970283808}
   m_Layer: 3
   m_Name: LeftBorder
-  m_TagString: Untagged
+  m_TagString: Obstacle
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
