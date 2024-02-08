@@ -18,14 +18,14 @@ public class BoidSpawner : MonoBehaviour
     int speed; 
 
     [SerializeField]
-    float boidDetection = 1f, obstacleDetection = 2f, collisionDetection = 0.5f;
+    float visualRadius = 2f, avoidRadius = 1f;
 
     [SerializeField, Range(0, 360)]
     int viewAngle;
 
     struct Boid {
         public GameObject body;
-        public Vector3 direction;
+        public Vector3 velocity;
     }
 
     Boid[] boids;
@@ -49,15 +49,10 @@ public class BoidSpawner : MonoBehaviour
     {
         //Update direction for each boid
         for (int i = 0; i < population; i++) {
-            //If obstacle is detected, avoid it during this frame
-            //if (AvoidObstacles(i)) continue;
-            //Otherwise, get other boids that are visible by this boid
-            List<int> visibleBoids = GetVisibleBoids(i);
-            //If collision with nearbyBoid detected, avoid collision during this frame
-            if (AvoidVisibleBoids(i, visibleBoids)) continue;
-            //Otherwise move with visible boids and jostle for position
-            //MoveWithVisibleBoids(i, visibleBoids);
-            //JostleForPosition(i, visibleBoids);
+            //List<int> visibleBoids = GetVisibleBoids(i);
+            Separation(i);
+            Alignment(i);
+            Cohesion(i);
         } 
         //Update position for each boid
         for (int i = 0; i < population; i++) {
@@ -85,6 +80,7 @@ public class BoidSpawner : MonoBehaviour
         return rotation;
     }
 
+    //Gets all boids within cone of sight of boids[boidID] 
     private List<int> GetVisibleBoids(int boidID) {
         Boid currentBoid = boids[boidID];
         List<int> visibleBoids = new List<int>();
@@ -104,30 +100,16 @@ public class BoidSpawner : MonoBehaviour
         return visibleBoids;
     }
 
-    private bool AvoidVisibleBoids(int boidID, List<int> visibleBoids) {
-        Boid boid = boids[boidID];
-        Vector3 nextPosition = GetNextPosition(boid.body.transform.localPosition, boid.direction);
-        bool collisionDetected = false;
-        foreach (int i in visibleBoids) {
-            Vector3 checkingPosition = GetNextPosition(boids[i].body.transform.localPosition, boids[i].direction);
-            if ((nextPosition - checkingPosition).magnitude <= collisionDetection) {
-                boid.direction = Quaternion.AngleAxis(20, Vector3.forward) * boid.direction; 
-                collisionDetected = true;
-            }
-        }
-        return collisionDetected;
+    private void Separation(int boidID) {
+        Boid currBoid = boids[boidID];
+
     }
 
-    private void MoveWithVisibleBoids(int boidID, List<int> nearbyBoids) {
-        Vector3 direction = boids[boidID].direction;
-        for (int i = 0; i < nearbyBoids.Count; i++) {
-            direction += boids[nearbyBoids[i]].direction;
-        }
-        direction = (direction / (nearbyBoids.Count + 1)).normalized;
-        boids[boidID].direction = direction;
+    private void Alignment(int boidID) {
+
     }
 
-    private void JostleForPosition(int boidID, List<int> nearbyBoids) {
+    private void Cohesion(int boidID) {
 
     }
 
